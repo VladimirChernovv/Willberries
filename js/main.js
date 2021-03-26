@@ -21,6 +21,8 @@ const showAcsessories = document.querySelectorAll('.show-acsessories');
 const showClothing = document.querySelectorAll('.show-clothing');
 const cartTableGoods = document.querySelector('.cart-table__goods');
 const cardTableTotal = document.querySelector('.card-table__total');
+const cartCount = document.querySelector('.cart-count');
+const btnDanger = document.querySelector('.btn-danger');
 
 // Функция которая получает данные(товар) с сервера. Сервером является папка db
 const getGoods = async () => {
@@ -34,20 +36,18 @@ const getGoods = async () => {
 
 // Создаём свой объект данных дя корзины
 const cart = {
-  cartGoods: [
-    {
-      id: '099',
-      name: 'Watch Dior',
-      price: 999,
-      count: 2,
-    },
-    {
-      id: '090',
-      name: 'Gray hat',
-      price: 99,
-      count: 4,
-    },
-  ],
+  cartGoods: [],
+  countQuantity() {
+    cartCount.textContent = this.cartGoods.reduce((sum, item) => {
+      return sum + item.count;
+    }, 0);
+  },
+  // Создаём метод(clearCart()) который полностью очищает корзину
+  clearCart() {
+    this.cartGoods.length = 0;
+    this.countQuantity();
+    this.renderCart();
+  },
   renderCart() {
     cartTableGoods.textContent = '';
     // Перебераем товары cartGoods
@@ -73,8 +73,9 @@ const cart = {
     cardTableTotal.textContent = totalPrice + '$';
   },
   deleteGood(id) {
-    this.cartGoods = this.cartGoods.filter(item => id !== item.id);
+    this.cartGoods = this.cartGoods.filter((item) => id !== item.id);
     this.renderCart();
+    this.countQuantity();
   },
   minusGood(id) {
     for (const item of this.cartGoods) {
@@ -83,44 +84,52 @@ const cart = {
           this.deleteGood(id);
         } else {
           item.count--;
-        };
-        
+        }
+
         break;
-      };
-    };
+      }
+    }
     this.renderCart();
+    this.countQuantity();
   },
   plusGood(id) {
-    for(const item of this.cartGoods) {
+    for (const item of this.cartGoods) {
       if (item.id === id) {
         item.count++;
         break;
-      };
-    };
+      }
+    }
     this.renderCart();
+    this.countQuantity();
   },
   addCartGoods(id) {
-    const goodItem = this.cartGoods.find(item => item.id === id);
+    const goodItem = this.cartGoods.find((item) => item.id === id);
     if (goodItem) {
       this.plusGood(id);
     } else {
       getGoods()
-        .then(data => data.find(item => item.id === id))
+        .then((data) => data.find((item) => item.id === id))
         .then(({ id, name, price }) => {
           this.cartGoods.push({
             id,
             name,
             price,
             count: 1,
-          })
-        })
+          });
+          this.countQuantity();
+        });
     }
   },
 };
 
+// Удаляем все товары в корзине по клику на кнопку Clear all
+btnDanger.addEventListener('click', () => {
+  cart.clearCart();
+});
+
 document.body.addEventListener('click', event => {
   const addToCart = event.target.closest('.add-to-cart');
-  console.log(addToCart);
+  // console.log(addToCart);
 
   if (addToCart) {
     cart.addCartGoods(addToCart.dataset.id);
